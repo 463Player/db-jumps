@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dirty Bomb Jumps Hub</title>
+    <style>
+        :root {
+            --db-orange: #ff6600;
+            --db-dark: #121212;
+            --db-card: #1e1e1e;
+            --db-light: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--db-dark);
+            color: var(--db-light);
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 15px;
+            border-bottom: 3px solid var(--db-orange);
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            color: var(--db-orange);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 2rem;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 25px;
+        }
+
+        /* Maps List Sidebar */
+        .maps-sidebar {
+            background-color: var(--db-card);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            height: fit-content;
+        }
+
+        .maps-sidebar h2 {
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            margin-top: 0;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-section {
+            margin-top: 25px;
+        }
+
+        .map-item {
+            padding: 12px 15px;
+            margin: 8px 0;
+            background: #2a2a2a;
+            border-left: 4px solid #555;
+            cursor: pointer;
+            border-radius: 0 4px 4px 0;
+            transition: all 0.2s ease;
+            font-weight: bold;
+        }
+
+        .map-item:hover {
+            background: #3a3a3a;
+            border-left-color: var(--db-orange);
+        }
+
+        .map-item.active {
+            background: var(--db-orange);
+            color: black;
+            border-left-color: #fff;
+        }
+
+        /* Video Dashboard Area */
+        .video-dashboard {
+            background-color: var(--db-card);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .video-dashboard h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        /* Grid Layout for Clickable Blocks */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .video-card {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .video-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--db-orange);
+        }
+
+        /* Thumbnail container */
+        .thumbnail-box {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #111;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 12px;
+            border: 1px solid #222;
+        }
+
+        .thumbnail-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .thumb-spinner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #555;
+            font-style: italic;
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .video-card:hover .play-overlay {
+            opacity: 1;
+        }
+
+        .play-icon {
+            width: 45px;
+            height: 45px;
+            background: var(--db-orange);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: black;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .video-card h4 {
+            margin: 0;
+            color: #ccc;
+            font-size: 0.85rem;
+            word-break: break-all;
+            line-height: 1.3;
+        }
+
+        .video-card:hover h4 {
+            color: #fff;
+        }
+
+        /* Trackers for clicked/watched states */
+        .video-card.watched {
+            border-color: #444;
+            opacity: 0.6;
+        }
+        .video-card.watched h4 {
+            color: #777;
+            text-decoration: line-through;
+        }
+        .watched-badge {
+            display: none;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #222;
+            color: #888;
+            border: 1px solid #444;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            z-index: 10;
+        }
+        .video-card.watched .watched-badge {
+            display: block;
+        }
+
+        /* Commands Dashboard Layout */
+        .cmd-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .cmd-card {
+            background: #2a2a2a;
+            border: 1px solid #333;
+            padding: 15px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .cmd-card label {
+            color: var(--db-orange);
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .cmd-input-wrap {
+            display: flex;
+            background: #111;
+            border: 1px solid #444;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .cmd-input-wrap:hover {
+            border-color: var(--db-orange);
+        }
+
+        .cmd-code {
+            padding: 10px 12px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff66;
+            font-size: 0.95rem;
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cmd-copy-btn {
+            background: #333;
+            color: #aaa;
+            padding: 10px 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-left: 1px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cmd-input-wrap:hover .cmd-copy-btn {
+            background: var(--db-orange);
+            color: black;
+        }
+
+        /* Credits Panel Styling */
+        .info-panel {
+            max-width: 700px;
+            background: #2a2a2a;
+            border: 1px solid #333;
+            border-left: 5px solid var(--db-orange);
+            padding: 25px;
+            border-radius: 6px;
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+
+        .info-panel h3 {
+            margin-top: 0;
+            color: #fff;
+            font-size: 1.3rem;
+        }
+
+        .info-panel p {
+            color: #ccc;
+            font-size: 1rem;
+        }
+
+        .info-panel a {
+            display: inline-block;
+            margin-top: 15px;
+            background: var(--db-orange);
+            color: black;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 4px;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .info-panel a:hover {
+            background: #ff8533;
+            transform: translateY(-1px);
+        }
+
+        .no-map-selected, .loading-msg {
+            text-align: center;
+            color: #777;
+            padding: 50px 0;
+        }
+
+        /* Lightbox Modal */
+        .lightbox-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lightbox-content {
+            width: 90%;
+            max-width: 1000px;
+            background: var(--db-card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid var(--db-orange);
+            position: relative;
+        }
+
+        .lightbox-content h3 {
+            margin-top: 0;
+            color: var(--db-orange);
+            font-size: 1rem;
+            padding-right: 40px;
+        }
+
+        .lightbox-content video {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: black;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: #aaa;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: var(--db-orange);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Dirty Bomb Jumps Hub</h1>
+    </header>
+
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <div class="maps-sidebar">
+            <h2>Objective Maps</h2>
+            <div id="maps-list">
+                <!-- Loaded via JS -->
+            </div>
+
+            <!-- Console Commands & Information section -->
+            <div class="sidebar-section">
+                <h2>Other</h2>
+                <div class="map-item" id="menu-commands-btn" onclick="selectCommandsMenu(this)">Commands</div>
+                <div class="map-item" id="menu-info-btn" onclick="selectInfoMenu(this)">Info</div>
+            </div>
+        </div>
+
+        <!-- Dashboard Display Window -->
+        <div class="video-dashboard">
+            <h2 id="selected-map-title">Select a Map</h2>
+            
+            <div id="no-selection-msg" class="no-map-selected">
+                Select an objective map or open the options in the sidebar to begin.
+            </div>
+
+            <div id="video-grid" class="video-grid">
+                <!-- Data renders here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox Media Stage Window -->
+    <div id="video-lightbox" class="lightbox-modal" onclick="closeVideo()">
+        <div class="lightbox-content" onclick="event.stopPropagation()">
+            <span class="close-btn" onclick="closeVideo()">&times;</span>
+            <h3 id="lightbox-title">Video Player</h3>
+            <video id="main-player" controls autoplay src=""></video>
+        </div>
+    </div>
+
+    <script>
+        const dbMaps = [
+            "Bridge",
+            "Castle",
+            "Chapel",
+            "Dockyard",
+            "Dome Redux",
+            "Terminal",
+            "Trainyard",
+            "Underground",
+            "Vault"
+        ];
+
+        const consoleCommandsData = [
+            { name: "Bridge", cmd: "switchlevel OBJ_Bridge" },
+            { name: "Underground", cmd: "switchlevel OBJ_Canarywharf" },
+            { name: "Dome Redux", cmd: "switchlevel OBJ_DomeRedux" },
+            { name: "Trainyard", cmd: "switchlevel OBJ_Trainyard" },
+            { name: "Terminal Redux", cmd: "switchlevel OBJ_TerminalRedux" },
+            { name: "Chapel", cmd: "switchlevel OBJ_whitechapel" },
+            { name: "Dockyard", cmd: "switchlevel OBJ_Dockyard" },
+            { name: "Vault", cmd: "switchlevel OBJ_Heist" },
+            { name: "Castle", cmd: "switchlevel OBJ_Castle" },
+            { name: "Modify Map Session Time Limit", cmd: "settimelimit XXX" }
+        ];
+
+        let currentFetchController = null;
+        let clickDebounceTimeout = null;
+        let watchedVideos = JSON.parse(localStorage.getItem('db_watched_jumps')) || [];
+
+        // Build Map Sidebar UI elements
+        const mapsListDiv = document.getElementById('maps-list');
+        dbMaps.forEach(map => {
+            const div = document.createElement('div');
+            div.className = 'map-item';
+            div.innerText = map;
+            div.onclick = () => handleMapClick(map, div);
+            mapsListDiv.appendChild(div);
+        });
+
+        function handleMapClick(mapName, element) {
+            clearTimeout(clickDebounceTimeout);
+
+            document.querySelectorAll('.map-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+
+            clickDebounceTimeout = setTimeout(() => {
+                selectMap(mapName);
+            }, 250);
+        }
+
+        function selectMap(mapName) {
+            document.getElementById('no-selection-msg').style.display = 'none';
+            document.getElementById('selected-map-title').innerText = `${mapName} Jumps`;
+            
+            const viewGrid = document.getElementById('video-grid');
+            viewGrid.className = "video-grid";
+            viewGrid.innerHTML = "<p class='loading-msg'>Reading video folder files...</p>";
+            closeVideo();
+
+            readFolderAndLoadVideos(mapName);
+        }
+
+        function readFolderAndLoadVideos(mapName) {
+            if (currentFetchController) currentFetchController.abort();
+            currentFetchController = new AbortController();
+            const signal = currentFetchController.signal;
+
+            const folderUrl = `videos/${encodeURIComponent(mapName)}/`;
+
+            fetch(folderUrl, { signal })
+                .then(response => {
+                    if (!response.ok) throw new Error('Folder empty or unavailable');
+                    return response.text();
+                })
+                .then(htmlText => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlText, 'text/html');
+                    const links = doc.querySelectorAll('a');
+                    
+                    const videoFiles = [];
+                    links.forEach(link => {
+                        let href = link.getAttribute('href');
+                        if (href && href.toLowerCase().endsWith('.mp4')) {
+                            let cleanName = href.split('/').pop();
+                            videoFiles.push(decodeURIComponent(cleanName));
+                        }
+                    });
+
+                    renderVideoGrid(videoFiles, mapName);
+                })
+                .catch(err => {
+                    if (err.name === 'AbortError') return;
+                    document.getElementById('video-grid').innerHTML = `<p style='color: #777;'>No videos found or folder hasn't been created yet inside: videos/${mapName}/</p>`;
+                });
+        }
+
+        function renderVideoGrid(files, mapName) {
+            const grid = document.getElementById('video-grid');
+            grid.innerHTML = "";
+            
+            if (files.length === 0) {
+                grid.innerHTML = "<p style='color: #777;'>No .mp4 files found inside this map's directory.</p>";
+                return;
+            }
+
+            files.sort();
+
+            files.forEach((fileName, index) => {
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                
+                const safePath = `videos/${encodeURIComponent(mapName)}/${encodeURIComponent(fileName)}`;
+                const storageId = `${mapName}_${fileName}`;
+
+                if (watchedVideos.includes(storageId)) {
+                    card.classList.add('watched');
+                }
+                
+                card.innerHTML = `
+                    <div class="watched-badge">WATCHED</div>
+                    <div class="thumbnail-box">
+                        <div class="thumb-spinner" id="spin-${index}">Generating preview...</div>
+                        <img class="thumbnail-img" id="img-${index}" alt="Jump Preview">
+                        <div class="play-overlay">
+                            <div class="play-icon">&#9658;</div>
+                        </div>
+                    </div>
+                    <h4>#${index + 1}: ${fileName}</h4>
+                `;
+
+                card.onclick = () => {
+                    if (!watchedVideos.includes(storageId)) {
+                        watchedVideos.push(storageId);
+                        localStorage.setItem('db_watched_jumps', JSON.stringify(watchedVideos));
+                        card.classList.add('watched');
+                    }
+                    openVideo(safePath, `#${index + 1}: ${fileName}`);
+                };
+                
+                grid.appendChild(card);
+                generateQuickPreview(safePath, index);
+            });
+        }
+
+        function selectCommandsMenu(element) {
+            clearTimeout(clickDebounceTimeout);
+            if (currentFetchController) currentFetchController.abort();
+            closeVideo();
+
+            document.querySelectorAll('.map-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+
+            document.getElementById('no-selection-msg').style.display = 'none';
+            document.getElementById('selected-map-title').innerText = "Developer Console Commands";
+
+            const viewGrid = document.getElementById('video-grid');
+            viewGrid.className = "cmd-grid"; 
+            viewGrid.innerHTML = "";
+
+            consoleCommandsData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'cmd-card';
+                card.innerHTML = `
+                    <label>${item.name}</label>
+                    <div class="cmd-input-wrap" onclick="copyCommandToClipboard('${item.cmd}', this)">
+                        <div class="cmd-code">${item.cmd}</div>
+                        <div class="cmd-copy-btn">Copy</div>
+                    </div>
+                `;
+                viewGrid.appendChild(card);
+            });
+        }
+
+        // Action menu swap script to handle the Info credits panel rendering
+        function selectInfoMenu(element) {
+            clearTimeout(clickDebounceTimeout);
+            if (currentFetchController) currentFetchController.abort();
+            closeVideo();
+
+            document.querySelectorAll('.map-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+
+            document.getElementById('no-selection-msg').style.display = 'none';
+            document.getElementById('selected-map-title').innerText = "Hub Information & Credits";
+
+            const viewGrid = document.getElementById('video-grid');
+            viewGrid.className = ""; // Remove grids to allow standard structural block layouts
+            
+            viewGrid.innerHTML = `
+                <div class="info-panel">
+                    <h3>Credits & Huge Thanks</h3>
+                    <p>All the high-quality jump demonstration clips featured throughout this hub were captured and documented by <strong>WiktorNW</strong>.</p>
+                    <p>Major props to him for his awesome contributions to the Dirty Bomb community! Make sure to check out his awesome website project, featuring an extensive cosmetic archive showcase:</p>
+                    <a href="https://wiktornw.github.io/DBStuff/#/Gallery" target="_blank" rel="noopener noreferrer">
+                        Visit WiktorNW's Weapon Finish Gallery →
+                    </a>
+                </div>
+            `;
+        }
+
+        function copyCommandToClipboard(text, element) {
+            navigator.clipboard.writeText(text).then(() => {
+                const badge = element.querySelector('.cmd-copy-btn');
+                const originalText = badge.innerText;
+                
+                badge.innerText = "Copied!";
+                badge.style.background = "#00ff66";
+                badge.style.color = "black";
+
+                setTimeout(() => {
+                    badge.innerText = originalText;
+                    badge.style.removeProperty('background');
+                    badge.style.removeProperty('color');
+                }, 1200);
+            });
+        }
+
+        function generateQuickPreview(videoUrl, targetIndex) {
+            const tempVideo = document.createElement('video');
+            tempVideo.src = videoUrl;
+            tempVideo.preload = 'metadata';
+            tempVideo.muted = true;
+            tempVideo.playsInline = true;
+
+            tempVideo.onloadedmetadata = function() {
+                tempVideo.currentTime = 1;
+            };
+
+            tempVideo.onseeked = function() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 320;
+                    canvas.height = 180;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
+                    
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                    
+                    const targetImg = document.getElementById(`img-${targetIndex}`);
+                    const targetSpinner = document.getElementById(`spin-${targetIndex}`);
+                    
+                    if (targetImg && targetSpinner) {
+                        targetImg.src = dataUrl;
+                        targetImg.style.display = 'block';
+                        targetSpinner.style.display = 'none';
+                    }
+                } catch (e) {
+                    const targetSpinner = document.getElementById(`spin-${targetIndex}`);
+                    if (targetSpinner) targetSpinner.innerText = "Preview loaded";
+                }
+                tempVideo.src = "";
+                tempVideo.load();
+            };
+
+            tempVideo.onerror = function() {
+                const targetSpinner = document.getElementById(`spin-${targetIndex}`);
+                if (targetSpinner) targetSpinner.innerText = "Video found";
+            };
+        }
+
+        function openVideo(videoUrl, titleText) {
+            const lightbox = document.getElementById('video-lightbox');
+            const player = document.getElementById('main-player');
+            
+            document.getElementById('lightbox-title').innerText = titleText;
+            player.src = videoUrl;
+            lightbox.style.display = 'flex';
+            player.load();
+        }
+
+        function closeVideo() {
+            const lightbox = document.getElementById('video-lightbox');
+            const player = document.getElementById('main-player');
+            
+            lightbox.style.display = 'none';
+            player.pause();
+            player.src = "";
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeVideo();
+        });
+    </script>
+</body>
+</html>
